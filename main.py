@@ -4,7 +4,7 @@ import os, sys
 #print(os.path.dirname(sys.argv[0]))
 
 
-def sale(n):git
+def sale(n):
 	return 10 + 5*(n//10)
 
 def buy(n):
@@ -58,7 +58,6 @@ def main():
 		get_buy = 10
 		pass
 		if get_buy:
-
 			prev_n = current_n
 			current_n += get_buy
 			data.write(str(current_n) + '\n')
