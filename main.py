@@ -4,7 +4,7 @@ import os, sys
 #print(os.path.dirname(sys.argv[0]))
 
 
-def sale(n):
+def sale(n):git
 	return 10 + 5*(n//10)
 
 def buy(n):
