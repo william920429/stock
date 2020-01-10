@@ -1,5 +1,8 @@
-from PyQt5 import QtWidgets, uic
-import pyqtgraph as pg
+# -*- coding: utf-8 -*-
+from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtCore import pyqtSignal
+import pyqtgraph
+from MainWindow import *
 import os, sys
 
 #print(os.path.dirname(sys.argv[0]))
@@ -12,16 +15,30 @@ def buy(n):
 	return 10 + 5*( (n - 1)//10 )
 
 def draw(prev, cur):
+
 	print("Draw", prev, cur)
 	pass
 
 class MainWindow(QtWidgets.QMainWindow):
 	def __init__(self, *args, **kwargs):
 		super(MainWindow, self).__init__(*args, **kwargs)
+		self.ui = Ui_MainWindow()
+		self.ui.setupUi(self)
+		#uic.loadUi("MainWindow.ui", self)
+		self.ui.graphWidget.enableMouse(b = False)
+		self.ui.graphWidget.setBackground("#ffffff")
+		self.ui.graphWidget.setTitle("股票價格", color = "#0000ff")#, size = 30
+		self.ui.graphWidget.showGrid(x = True, y = True)
+		pen = pyqtgraph.mkPen(width = 1.5, style = QtCore.Qt.SolidLine)
+		self.ui.graphWidget.plot([1,2,3,4,5], [1,2,3,4,5], pen = pen)
+		self.ui.graphWidget.plot([8,7,8,7,8], [0,4,5,8,1], pen = pen)
+	
 
-		uic.loadUi("MainWindow.ui", self)
+	def draw(self, prev, cur):
+		pass
 
-def setupGUI():
+
+def GUI():
 	app = QtWidgets.QApplication(sys.argv)
 	mainWindow = MainWindow()
 	mainWindow.show()
@@ -85,4 +102,4 @@ def main():
 
 if __name__ == "__main__":
 	#main()
-	sys.exit(setupGUI())
+	sys.exit(GUI())
