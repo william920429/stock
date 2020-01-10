@@ -1,4 +1,5 @@
-#import numpy
+from PyQt5 import QtWidgets, uic
+import pyqtgraph as pg
 import os, sys
 
 #print(os.path.dirname(sys.argv[0]))
@@ -14,7 +15,20 @@ def draw(prev, cur):
 	print("Draw", prev, cur)
 	pass
 
+class MainWindow(QtWidgets.QMainWindow):
+	def __init__(self, *args, **kwargs):
+		super(MainWindow, self).__init__(*args, **kwargs)
+
+		uic.loadUi("MainWindow.ui", self)
+
+def setupGUI():
+	app = QtWidgets.QApplication(sys.argv)
+	mainWindow = MainWindow()
+	mainWindow.show()
+	return app.exec_()
+
 def main():
+	
 	#stock_num = []
 	filename = os.path.dirname(sys.argv[0]) + "/data.txt"
 	current_n = 10
@@ -52,7 +66,7 @@ def main():
 		data.flush()
 		draw(prev_n, current_n)
 	
-	a = True
+	a = False
 	while a:
 		a = False
 		get_buy = 10
@@ -65,7 +79,10 @@ def main():
 			draw(prev_n, current_n)
 		
 		pass
+	
+	
 
 
 if __name__ == "__main__":
-	main()
+	#main()
+	sys.exit(setupGUI())
