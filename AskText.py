@@ -1,48 +1,42 @@
 # -*- coding: utf-8 -*-
+from Ui.Ui_AskText import *
 
-# Form implementation generated from reading ui file 'AskText.ui'
-#
-# Created by: PyQt5 UI code generator 5.14.0
-#
-# WARNING! All changes made in this file will be lost!
+class AskText(QtWidgets.QMainWindow):
+	def __init__(self, mainWindow, str):
+		super().__init__()
+		self.ui = Ui_AskText()
+		self.ui.setupUi(self)
+		self.setWindowTitle(str)
+		self.ui.question_label.setText(str)
+		
+		self.mainWindow = mainWindow
+		self.log = self.mainWindow.ui.log_listWidget
+		self.log.addItem(str)
 
+		self.event_init()
 
-from PyQt5 import QtCore, QtGui, QtWidgets
+	def event_init(self):
+		self.ans = None
+		self.ui.confirm_btn.clicked.connect(self.event_handle)
+		self.ui.input.installEventFilter(self)
 
+	def event_handle(self):
+		self.ans = self.ui.input.toPlainText()
+		# self.log.addItem(self.ans)
+		self.close()
 
-class Ui_AskText(object):
-    def setupUi(self, AskText):
-        AskText.setObjectName("AskText")
-        AskText.resize(412, 172)
-        AskText.setMinimumSize(QtCore.QSize(412, 172))
-        AskText.setMaximumSize(QtCore.QSize(412, 172))
-        self.centralwidget = QtWidgets.QWidget(AskText)
-        self.centralwidget.setObjectName("centralwidget")
-        self.confirm_btn = QtWidgets.QPushButton(self.centralwidget)
-        self.confirm_btn.setGeometry(QtCore.QRect(260, 100, 93, 41))
-        self.confirm_btn.setObjectName("confirm_btn")
-        self.question_label = QtWidgets.QLabel(self.centralwidget)
-        self.question_label.setGeometry(QtCore.QRect(60, 20, 301, 61))
-        font = QtGui.QFont()
-        font.setFamily("Consolas")
-        font.setPointSize(12)
-        self.question_label.setFont(font)
-        self.question_label.setAlignment(QtCore.Qt.AlignCenter)
-        self.question_label.setObjectName("question_label")
-        self.input = QtWidgets.QPlainTextEdit(self.centralwidget)
-        self.input.setGeometry(QtCore.QRect(70, 100, 111, 41))
-        font = QtGui.QFont()
-        font.setFamily("Consolas")
-        font.setPointSize(14)
-        self.input.setFont(font)
-        self.input.setObjectName("input")
-        AskText.setCentralWidget(self.centralwidget)
+	def eventFilter(self, obj, event):
+		if obj is self.ui.input and event.type() == QtCore.QEvent.KeyPress:
+			if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
+				self.event_handle()
+				return True
+		return super().eventFilter(obj, event)
 
-        self.retranslateUi(AskText)
-        QtCore.QMetaObject.connectSlotsByName(AskText)
+	# def keyPressEvent(self, e):
+	# 	if e.key() == QtCore.Qt.Key_Return:
+	# 		self.react()
 
-    def retranslateUi(self, AskText):
-        _translate = QtCore.QCoreApplication.translate
-        AskText.setWindowTitle(_translate("AskText", "MainWindow"))
-        self.confirm_btn.setText(_translate("AskText", "確定"))
-        self.question_label.setText(_translate("AskText", "TextLabel"))
+	def get(self):
+		self.show()
+		self.mainWindow.app.exec_()
+		return self.ans
