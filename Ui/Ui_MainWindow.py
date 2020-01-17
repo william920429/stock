@@ -20,7 +20,7 @@ class Ui_MainWindow(object):
         self.graphWidget.setGeometry(QtCore.QRect(29, 30, 741, 561))
         self.graphWidget.setObjectName("graphWidget")
         self.buy_sell_tableWidget = QtWidgets.QTableWidget(self.centralwidget)
-        self.buy_sell_tableWidget.setGeometry(QtCore.QRect(790, 30, 271, 561))
+        self.buy_sell_tableWidget.setGeometry(QtCore.QRect(790, 30, 261, 561))
         self.buy_sell_tableWidget.setObjectName("buy_sell_tableWidget")
         self.buy_sell_tableWidget.setColumnCount(2)
         self.buy_sell_tableWidget.setRowCount(0)

@@ -24,15 +24,16 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.graph_init()
 		self.event_init()
 
-		self.ui.buy_tableWidget.setRowCount(10)
-		self.ui.buy_tableWidget.setColumnCount(2)
+		self.ui.buy_sell_tableWidget.setRowCount(10)
+		self.ui.buy_sell_tableWidget.setColumnCount(2)
+		self.ui.buy_sell_tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 		
-		self.buy = []
-		self.sell = []
-		self.times = []
-		self.now = -1
-		global log
-		log = self.ui.log_listWidget
+		self.buy_list = []	#for plotting
+		self.sell_list = []
+		self.times = []	#for plotting 0 to current
+		self.now = -1 #record current time
+		self.n = None 
+		self.log = self.ui.log_listWidget
 		#self.ui.log_listWidget.rowsInserted
 		self.app = app
 		self.main()
@@ -53,33 +54,72 @@ class MainWindow(QtWidgets.QMainWindow):
 	def eventFilter(self, obj, event):
 		if obj is self.ui.buy_input and event.type() == QtCore.QEvent.KeyPress:
 			if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
-				log.addItem("log: buy " + self.ui.buy_input.toPlainText())
-				self.ui.buy_input.setPlainText("")
+				self.buy()
 				return True
 		if obj is self.ui.sell_input and event.type() == QtCore.QEvent.KeyPress:
 			if event.key() in (QtCore.Qt.Key_Return, QtCore.Qt.Key_Enter):
-				log.addItem("log: sell " + self.ui.sell_input.toPlainText())
-				self.ui.sell_input.setPlainText("")
+				self.sell()
 				return True
 		return super().eventFilter(obj, event)
 	
 	def event_handle(self):
 		sender = self.sender()
 		if sender is self.ui.buy_btn:
-			log.addItem("log: buy " + self.ui.buy_input.toPlainText())
-			self.ui.buy_input.setPlainText("")
+			self.buy()
 		elif sender is self.ui.sell_btn:
-			log.addItem("log: sell " + self.ui.sell_input.toPlainText())
-			self.ui.sell_input.setPlainText("")
-
-		pass
+			self.sell()
 
 	def text_changed(self):
 		sender = self.sender()
 		if sender is self.ui.buy_input:
-			log.addItem(self.ui.buy_input.toPlainText())
+			text = self.ui.buy_input.toPlainText()
+			formula = buy_formula
+			label = self.ui.buy_price_label
+
 		elif sender is self.ui.sell_input:
-			log.addItem(self.ui.sell_input.toPlainText())
+			text = self.ui.sell_input.toPlainText()
+			formula = sell_formula
+			label = self.ui.sell_price_label
+		else: return
+		if text == "":
+			label.setText("0")
+		elif not str.isdigit(text): return
+		else:
+			n = self.n
+			price = 0
+			for i in range(int(text)):
+				price += formula(n + i)
+			label.setText(str(price))
+
+	def buy(self):
+		n = self.n
+		price = 0
+		text = self.ui.buy_input.toPlainText()
+		if text == "": return False
+		if not str.isdigit(text):
+			self.log.addItem("Invalid Buy Input!")
+			return False
+		num = int(text)
+		self.add(n + num)
+		self.ui.buy_input.setPlainText("")
+		for i in range(num):
+			price += buy_formula(n + i)
+		self.log.addItem("成功購買 {} 張股票，共 {} 元".format(num, price))
+
+	def sell(self):
+		n = self.n
+		price = 0
+		text = self.ui.sell_input.toPlainText()
+		if text == "": return False
+		if not str.isdigit(text):
+			self.log.addItem("Invalid Sell Input!")
+			return False
+		num = int(text)
+		self.add(n - num)
+		self.ui.sell_input.setPlainText("")
+		for i in range(num):
+			price += sell_formula(n + i)
+		self.log.addItem("成功賣出 {} 張股票，共 {} 元".format(num, price))
 
 	def graph_init(self):
 		self.ui.graphWidget.setBackground("#ffffff")
@@ -90,23 +130,42 @@ class MainWindow(QtWidgets.QMainWindow):
 		#self.ui.graphWidget.plot([1,2,3,4,5], [1,2,3,4,5], pen = pen)
 		#self.ui.graphWidget.plot([8,7,8,7,8], [0,4,5,8,1], pen = pen)
 	
-	def add(self, n, flush = True):
-		self.buy.append( buy_formula(n) )
-		self.sell.append( sell_formula(n) )
+	def add(self, n, flush_and_update = True):
+		self.buy_list.append( buy_formula(n) )
+		self.sell_list.append( sell_formula(n) )
+		self.n = n
 		self.now += 1
-		self.times.append( self.now )
+		self.times.append(self.now)
 		self.data.write(str(n) + '\n')
-		if flush:
+		if flush_and_update:
 			self.data.flush()
+			self.draw()
+			self.UpdateTable()
 
 	def draw(self):
 		self.ui.graphWidget.clear()
-		self.ui.graphWidget.plot(self.times, self.buy, pen = self.buy_pen)
-		self.ui.graphWidget.plot(self.times, self.sell, pen = self.sell_pen)
+		self.ui.graphWidget.plot(self.times, self.buy_list, pen = self.buy_pen)
+		self.ui.graphWidget.plot(self.times, self.sell_list, pen = self.sell_pen)
+		self.UpdatePrice()
+
+	def UpdatePrice(self):
+		self.ui.buy_current_label.setText(str(buy_formula(self.n)))
+		self.ui.sell_current_label.setText(str(sell_formula(self.n)))
+
+	def UpdateTable(self):
+		self.ui.buy_sell_tableWidget.clearContents()
+		n = self.n
+		buy_price = 0
+		sell_price = 0
+		for i in range(10):
+			buy_price += buy_formula(n + i)
+			sell_price += sell_formula(n + i)
+			self.ui.buy_sell_tableWidget.setItem(i, 0, QtWidgets.QTableWidgetItem(str(buy_price)))
+			self.ui.buy_sell_tableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem(str(sell_price)))
 	
 	def main(self):
 		filename = os.path.dirname(sys.argv[0]) + "/data.txt"
-		n = 10
+		self.n = 10
 		self.data = None
 		react = False
 		
@@ -119,8 +178,8 @@ class MainWindow(QtWidgets.QMainWindow):
 		if react:
 			self.data = open(filename, mode="r+", encoding="utf8")
 			for line in self.data:
-				self.add(int(line), flush = False)
-				log.addItem(line.strip('\n'))
+				self.add(int(line), flush_and_update = False)
+				self.log.addItem(line.strip('\n'))
 
 		else:
 			self.data = open(filename, mode="w", encoding="utf8")
@@ -130,26 +189,17 @@ class MainWindow(QtWidgets.QMainWindow):
 			#print(a)
 			#a = input("請輸入起始流通量 n (預設：10)：")
 			if str.isdecimal(a):
-				log.addItem( a )
+				self.log.addItem( a )
 				n = int(a)
 			else:
-				log.addItem("使用預設值")
+				self.log.addItem("使用預設值")
 				#print("使用預設值")
 			self.add(n)
 
-		self.draw()
 		self.UpdateTable()
 		
-	def UpdateTable(self):
-		self.ui.buy_tableWidget.clearContents()
-		self.ui.sell_tableWidget.clearContents()
-		n = self.times[-1]
-		sell_price = sell_formula(n)
-		buy_price = buy_formula(n)
-		for i in range(10):
-			self.ui.buy_tableWidget.setItem(i, 0, QtWidgets.QTableWidgetItem(str(i)))
-			print(i)
-			pass
+	
+			
 
 
 if __name__ == "__main__":
