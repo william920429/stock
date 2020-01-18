@@ -9,10 +9,11 @@ import os, sys
 #print(os.path.dirname(sys.argv[0]))
 
 def sell_formula(n):
-	return 10 + 5*(n//10)
+	return 10 + 5*( (n - 1)//10 )
 
 def buy_formula(n):
-	return 10 + 5*( (n - 1)//10 )
+	return 10 + 5*(n//10)
+	
 
 class MainWindow(QtWidgets.QMainWindow):
 	def __init__(self, app, *args, **kwargs):
@@ -75,11 +76,14 @@ class MainWindow(QtWidgets.QMainWindow):
 			text = self.ui.buy_input.toPlainText()
 			formula = buy_formula
 			label = self.ui.buy_price_label
+			sign = 1
 
 		elif sender is self.ui.sell_input:
 			text = self.ui.sell_input.toPlainText()
 			formula = sell_formula
 			label = self.ui.sell_price_label
+			sign = -1
+
 		else: return
 		if text == "":
 			label.setText("0")
@@ -88,7 +92,7 @@ class MainWindow(QtWidgets.QMainWindow):
 			n = self.n
 			price = 0
 			for i in range(int(text)):
-				price += formula(n + i)
+				price += formula(n + sign*i)
 			label.setText(str(price))
 
 	def buy(self):
@@ -118,7 +122,7 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.add(n - num)
 		self.ui.sell_input.setPlainText("")
 		for i in range(num):
-			price += sell_formula(n + i)
+			price += sell_formula(n - i)
 		self.log.addItem("成功賣出 {} 張股票，共 {} 元".format(num, price))
 
 	def graph_init(self):
@@ -136,8 +140,9 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.n = n
 		self.now += 1
 		self.times.append(self.now)
-		self.data.write(str(n) + '\n')
+		self.ui.label.setText(str(n))
 		if flush_and_update:
+			self.data.write(str(n) + '\n')
 			self.data.flush()
 			self.draw()
 			self.UpdateTable()
@@ -159,13 +164,13 @@ class MainWindow(QtWidgets.QMainWindow):
 		sell_price = 0
 		for i in range(10):
 			buy_price += buy_formula(n + i)
-			sell_price += sell_formula(n + i)
+			sell_price += sell_formula(n - i)
 			self.ui.buy_sell_tableWidget.setItem(i, 0, QtWidgets.QTableWidgetItem(str(buy_price)))
 			self.ui.buy_sell_tableWidget.setItem(i, 1, QtWidgets.QTableWidgetItem(str(sell_price)))
 	
 	def main(self):
 		filename = os.path.dirname(sys.argv[0]) + "/data.txt"
-		self.n = 10
+		self.n = 100
 		self.data = None
 		react = False
 		
@@ -174,28 +179,31 @@ class MainWindow(QtWidgets.QMainWindow):
 			react = AskBool(self, "偵測到存檔，是否讀入？").get()
 			if react == None:
 				sys.exit(-1)
-		
+
 		if react:
 			self.data = open(filename, mode="r+", encoding="utf8")
-			for line in self.data:
-				self.add(int(line), flush_and_update = False)
-				self.log.addItem(line.strip('\n'))
+			print("react:", react)
+			for line in map(int, self.data.read().split()):
+				self.n = line
+				self.add(self.n, flush_and_update = False)
+				self.log.addItem("Reading: " + str(line))
 
 		else:
 			self.data = open(filename, mode="w", encoding="utf8")
-			a = AskText(self, "請輸入起始流通量 (預設：10)").get()
+			a = AskText(self, "請輸入起始流通量 (預設：{})".format(self.n)).get()
 			if a is None:
 				sys.exit(-1)
 			#print(a)
 			#a = input("請輸入起始流通量 n (預設：10)：")
 			if str.isdecimal(a):
 				self.log.addItem( a )
-				n = int(a)
+				self.n = int(a)
 			else:
 				self.log.addItem("使用預設值")
 				#print("使用預設值")
-			self.add(n)
+			self.add(self.n)
 
+		self.draw()
 		self.UpdateTable()
 		
 	

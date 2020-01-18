@@ -24,6 +24,8 @@ class AskBool(QtWidgets.QMainWindow):
 			self.ans = True
 		elif sender is self.ui.cancel_btn:
 			self.ans = False
+		else:
+			self.log.addItem("Error Asking Bool!")
 
 		self.log.addItem(sender.text())
 		self.close()
