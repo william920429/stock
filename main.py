@@ -8,6 +8,8 @@ import os, sys
 
 #print(os.path.dirname(sys.argv[0]))
 
+debug = False
+
 def sell_formula(n):
 	return 10 + 5*( (n - 1)//10 )
 
@@ -29,6 +31,9 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.ui.buy_sell_tableWidget.setColumnCount(2)
 		self.ui.buy_sell_tableWidget.setEditTriggers(QtWidgets.QAbstractItemView.NoEditTriggers)
 		
+		if not debug:
+			self.ui.label.hide()
+
 		self.buy_list = []	#for plotting
 		self.sell_list = []
 		self.times = []	#for plotting 0 to current
@@ -129,8 +134,8 @@ class MainWindow(QtWidgets.QMainWindow):
 		self.ui.graphWidget.setBackground("#ffffff")
 		self.ui.graphWidget.setTitle("股票價格", color = "#0000ff")#, size = 30
 		self.ui.graphWidget.showGrid(x = True, y = True)
-		self.buy_pen  = pyqtgraph.mkPen(width = 2, style = QtCore.Qt.SolidLine,  symbol='o', color = "#ff0000")
-		self.sell_pen = pyqtgraph.mkPen(width = 2, style = QtCore.Qt.SolidLine,  symbol='o', color = "#00ff00")
+		self.buy_pen  = pyqtgraph.mkPen(width = 3, style = QtCore.Qt.SolidLine,  symbol='o', color = "#ff0000")
+		#self.sell_pen = pyqtgraph.mkPen(width = 2, style = QtCore.Qt.SolidLine,  symbol='o', color = "#00ff00")
 		#self.ui.graphWidget.plot([1,2,3,4,5], [1,2,3,4,5], pen = pen)
 		#self.ui.graphWidget.plot([8,7,8,7,8], [0,4,5,8,1], pen = pen)
 	
@@ -150,7 +155,7 @@ class MainWindow(QtWidgets.QMainWindow):
 	def draw(self):
 		self.ui.graphWidget.clear()
 		self.ui.graphWidget.plot(self.times, self.buy_list, pen = self.buy_pen)
-		self.ui.graphWidget.plot(self.times, self.sell_list, pen = self.sell_pen)
+		#self.ui.graphWidget.plot(self.times, self.sell_list, pen = self.sell_pen)
 		self.UpdatePrice()
 
 	def UpdatePrice(self):
@@ -182,7 +187,6 @@ class MainWindow(QtWidgets.QMainWindow):
 
 		if react:
 			self.data = open(filename, mode="r+", encoding="utf8")
-			print("react:", react)
 			for line in map(int, self.data.read().split()):
 				self.n = line
 				self.add(self.n, flush_and_update = False)
